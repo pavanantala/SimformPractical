@@ -1,0 +1,199 @@
+﻿
+@{
+    ViewBag.Title = "EmployeeToProjectIndex";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+
+<div class="content">
+
+    <div class="panel panel-default">
+        <div class="panel-heading grid-title titlepanel gray-border">
+            <div class="grid-title">
+                <h5 class="panel-title">
+                    <b>EmployeeToProject List</b>
+
+                    
+                    <div class="row">
+                        <div class="col">
+                            <input type="text" class="form-control" id="EmpName" placeholder="Employee name">
+                        </div>
+                        <div class="col">
+                            <input type="text" class="form-control" id="ProjectName" placeholder="Project name">
+                        </div>
+                        <div class="col">
+                            @*<input type="text" class="form-control date" id="JoiningDate" placeholder="Select Date">*@
+                            <input type='text' id="JoiningDate" class="form-control date" readonly />
+                            <span class="input-group-addon">
+                                <span class="ui-icon-calendar"></span>
+                            </span>
+                        </div>
+                        <div class="col">
+                            <button class="btn btn-primary" onclick="BindEmployeeToProjectList();">Search</button>
+                        </div>
+                        <div class="col">
+                            <a href="@Url.Action("AddEditEmployeeToProject", "Employee", new { @model = Model})" class="btn btn-primary pull-right"><span><i class="icon-add position-right"></i>Assign Project To Employee</span></a>
+                        </div>
+                    </div>
+                    
+
+                    
+
+                </h5>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table datatable-basic table-hover table-bordered" id="tblEmployeeToProject"></table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="DeleteConfirmModal" style="display:none;" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header popup-header">
+                <span class="close popup-header-close" id="Close">×</span>
+                <h4>Delete</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure want to unassign this Employee from this project?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnc" onclick="DeleteEmployeeToProject()">OK</button>
+                <button type="button" class="btn btn-default" id="btncancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        BindEmployeeToProjectList();
+    });
+
+    function BindEmployeeToProjectList() {
+        //var VideoListData = [];
+        debugger
+        var EmpName = $('#EmpName').val();
+        var ProjectName = $('#ProjectName').val();
+        var JoiningDate = $('#JoiningDate').val();
+        var EmployeeToProjectlist = [];
+        $.ajax({
+            url: '@Url.Action("GetEmployeeToProjectList", "Employee")',
+            dataType: "json",
+            data: {
+                EmpName: EmpName,
+                ProjName: ProjectName,
+                JoiningDate: JoiningDate
+            },
+
+            async: true,
+            error: function () {
+            },
+            success: function (data) {
+
+                EmployeeToProjectlistdata = data;
+
+                if ($.fn.DataTable.isDataTable("#tblEmployeeToProject")) {
+                    $('#tblEmployeeToProject').DataTable().destroy();
+                }
+                $('#tblEmployeeToProject').DataTable({
+
+                    data: EmployeeToProjectlistdata,
+                    //"bDestroy": true,
+                    
+                    "aLengthMenu": [10, 20, 50, 100, 200],
+                    "pageLength": 10,
+                    "orderSequence": ["desc", "asc"],
+                    "order": [[0, 'desc']],
+                    "bAutoWidth": false,
+                    "dom": '<"top"i>rt<"bottom"flp><"clear">',
+                    "bFilter": false,
+                    "language": {
+                        "searchPlaceholder": "Type to Search..."
+                    },
+
+                    "columns": [
+
+                        {
+                            "title": "Id", "data": "Id", "orderable": true, "visible": false
+                        },
+                        {
+                            "title": "FullName", "data": "FullName", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "ProjectName", "data": "Name", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "JoiningDate", "data": "JoiningDateString", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "Cost", "data": "Cost", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "Action", "data": "", "orderable": false, "sClass": "action",
+                            "render": function (data, type, row) {
+
+                                var urledit = '@Url.Action("AddEditEmployeeToProject", "Employee")?Id=' + row.Id;
+                                var editValue = '<a href=' + urledit + ' class="cursior-pointer btn btn-default" data-toggle="tooltip" title="Edit">Edit</a>';
+                                var urlDelete = '@Url.Action("DeleteEmployeeToProject", "Employee")?Id=' + row.Id;
+                                var deleteValue = '<a  onclick="DeleteConfirm(' + row.Id + ')"  class="cursior-pointer btn btn-default" data-toggle="tooltip" title="Delete">Delete</a>'
+                                return editValue + '&nbsp' + deleteValue ;
+                            }
+                        },
+                    ],
+                    "initComplete": function () {
+                        var dataTable = $('#tblEmployeeToProject').DataTable();
+                        $('[data-toggle="tooltip"]').tooltip();
+
+                    }
+                    //"fnDrawCallback": function () {
+                    //}
+                })
+            }
+        })
+    }
+
+
+
+    function DeleteConfirm(Id) {
+        DeleteDataId = Id;
+        $('#DeleteConfirmModal').show();
+    }
+
+    function DeleteEmployeeToProject(Id) {
+        $.ajax({
+            url: '@Url.Action("DeleteEmployeeToProject", "Employee")?Id=' + DeleteDataId,
+            success: function (data) {
+                $('#DeleteConfirmModal').hide();
+                DeleteDataId = 0;
+                BindEmployeeToProjectList();
+                showNotification(data.Message, data.type);
+                //   }
+            },
+            error: function () {
+                $('#DeleteConfirmModal').hide();
+                //ValidationMessage("Record Not deleted");
+            }
+        });
+    }
+
+    $('#Close').click(function () {
+        $('#DeleteConfirmModal').hide();
+    })
+    $('#btncancel').click(function () {
+        $('#DeleteConfirmModal').hide();
+    })
+        
+    $('.date').datepicker({
+        minDate: 0,
+        format: "dd-MM-yyyy",
+        todayHighlight: true,
+        clearBtn: true,
+        orientation: "bottom left",
+        autoclose: true
+    });
+    
+
+</script>
+

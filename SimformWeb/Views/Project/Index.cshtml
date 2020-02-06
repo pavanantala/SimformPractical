@@ -1,0 +1,147 @@
+﻿
+@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div class="content">
+
+    <div class="panel panel-default">
+        <div class="panel-heading grid-title titlepanel gray-border">
+            <div class="grid-title">
+                <h5 class="panel-title">
+                    <b>Project List</b>
+
+                    <a href="@Url.Action("AddEditProject", "Project", new { @model = Model})" class="btn btn-primary pull-right"><span><i class="icon-add position-right"></i>Add Project</span></a>
+
+                </h5>
+            </div>
+        </div>
+        <div class="panel-body">
+            <div class="table-responsive">
+                <table class="table datatable-basic table-hover table-bordered" id="tblProject"></table>
+            </div>
+        </div>
+    </div>
+</div>
+<div class="modal" id="DeleteConfirmModal" style="display:none;" role="dialog">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header popup-header">
+                <span class="close popup-header-close" id="Close">×</span>
+                <h4>Delete</h4>
+            </div>
+            <div class="modal-body">
+                <p>Are you sure want to delete this Project?</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" id="btnc" onclick="DeleteProject()">OK</button>
+                <button type="button" class="btn btn-default" id="btncancel">Cancel</button>
+            </div>
+        </div>
+    </div>
+</div>
+<script>
+    $(document).ready(function () {
+        BindProjectList();
+    });
+
+    function BindProjectList() {
+        //var VideoListData = [];
+        var Projectlist = [];
+        $.ajax({
+            url: '@Url.Action("GetAllProject", "Project")',
+            dataType: "json",
+            async: true,
+            error: function () {
+            },
+            success: function (data) {
+
+                Projectlistdata = data;
+
+                if ($.fn.DataTable.isDataTable("#tblProject")) {
+                    $('#tblProject').DataTable().destroy();
+                }
+                $('#tblProject').DataTable({
+
+                    data: Projectlistdata,
+                    "bDestroy": true,
+                    "aLengthMenu": [10, 20, 50, 100, 200],
+                    "pageLength": 10,
+                    "orderSequence": ["desc", "asc"],
+                    "order": [[0, 'desc']],
+                    "bAutoWidth": false,
+                    "dom": '<"top"i>rt<"bottom"flp><"clear">',
+                    "language": {
+                        "searchPlaceholder": "Type to Search..."
+                    },
+
+                    "columns": [
+
+                        {
+                            "title": "Id", "data": "Id", "orderable": true, "visible": false
+                        },
+                        {
+                            "title": "Name", "data": "Name", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "Cost", "data": "Cost", "orderable": true, "visible": true
+                        },
+                        {
+                            "title": "Action", "data": "", "orderable": false, "sClass": "action",
+                            "render": function (data, type, row) {
+
+                                var urledit = '@Url.Action("AddEditProject", "Project")?Id=' + row.Id;
+                                var editValue = '<a href=' + urledit + ' class="cursior-pointer btn btn-default" data-toggle="tooltip" title="Edit">Edit</a>';
+                                var urlDelete = '@Url.Action("DeleteProject", "Project")?Id=' + row.Id;
+                                var deleteValue = '<a  onclick="DeleteConfirm(' + row.Id + ')"  class="cursior-pointer btn btn-default" data-toggle="tooltip" title="Delete">Delete</a>'
+                                return editValue + '&nbsp' + deleteValue ;
+                            }
+                        },
+                    ],
+                    "initComplete": function () {
+                        var dataTable = $('#tblProject').DataTable();
+                        $('[data-toggle="tooltip"]').tooltip();
+
+                    }
+                    //"fnDrawCallback": function () {
+                    //}
+                })
+            }
+        })
+    }
+
+
+
+    function DeleteConfirm(Id) {
+        DeleteDataId = Id;
+        $('#DeleteConfirmModal').show();
+    }
+
+    function DeleteProject(Id) {
+        $.ajax({
+            url: '@Url.Action("DeleteProject", "Project")?Id=' + DeleteDataId,
+            success: function (data) {
+                $('#DeleteConfirmModal').hide();
+                DeleteDataId = 0;
+                BindProjectList();
+                showNotification(data.Message, data.type);
+                //   }
+            },
+            error: function () {
+                $('#DeleteConfirmModal').hide();
+                //ValidationMessage("Record Not deleted");
+            }
+        });
+    }
+
+    $('#Close').click(function () {
+        $('#DeleteConfirmModal').hide();
+    })
+    $('#btncancel').click(function () {
+        $('#DeleteConfirmModal').hide();
+    })
+
+
+</script>
+
