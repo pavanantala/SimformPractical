@@ -170,6 +170,7 @@
     <Compile Include="Services\ProjectService.cs" />
   </ItemGroup>
   <ItemGroup>
+    <Content Include="App_Data\SimformPractical.sql" />
     <Content Include="Content\bootstrap-datepicker.css" />
     <Content Include="Content\bootstrap-datepicker.min.css" />
     <Content Include="Content\bootstrap-datepicker.standalone.css" />
